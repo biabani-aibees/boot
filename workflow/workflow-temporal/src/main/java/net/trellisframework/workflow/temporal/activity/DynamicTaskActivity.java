@@ -84,7 +84,8 @@ public class DynamicTaskActivity implements DynamicActivity {
 
     private ScheduledExecutorService startHeartbeat(Class<?> clazz) {
         var annotation = clazz.getAnnotation(net.trellisframework.workflow.temporal.annotation.Activity.class);
-        Duration interval = annotation != null ? DurationParser.parse(annotation.heartbeat()) : Duration.ofSeconds(10);
+        Duration timeout = annotation != null ? DurationParser.parse(annotation.heartbeat()) : Duration.ofSeconds(10);
+        Duration interval = timeout.dividedBy(3);
         ActivityExecutionContext ctx = Activity.getExecutionContext();
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "heartbeat-" + clazz.getSimpleName() + "-" + Thread.currentThread().getId());

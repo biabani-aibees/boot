@@ -1021,7 +1021,7 @@ import net.trellisframework.workflow.annotation.Backoff;
 | `startToCloseTimeout` | `"60s"` | Max time from start to completion |
 | `scheduleToStartTimeout` | `""` | Max time from schedule to start |
 | `scheduleToCloseTimeout` | `""` | Max time from schedule to completion |
-| `heartbeat` | `"10s"` | Heartbeat interval for long-running activities |
+| `heartbeat` | `"10s"` | Heartbeat timeout; Trellis heartbeats automatically three times within it |
 | `retry` | `@Retry` | Retry configuration |
 
 **@Retry Annotation:**
