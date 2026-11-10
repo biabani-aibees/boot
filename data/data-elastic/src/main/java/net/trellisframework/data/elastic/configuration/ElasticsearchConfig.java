@@ -47,15 +47,24 @@ public class ElasticsearchConfig {
         credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(properties.getUsername(), properties.getPassword()));
         String uri = properties.getUris().stream().findFirst().orElseThrow(() -> new NotFoundException(Messages.ELASTIC_CONFIG_NOT_FOUND));
         SSLContext ssl = SSLContextBuilder.create().loadTrustMaterial(null, new TrustAllStrategy()).build();
+        Optional<Integer> connectionRequestTimeout = Optional.ofNullable(properties.getConnectionRequestTimeout()).map(Duration::toMillis).map(Long::intValue);
         RestClient restClient = RestClient.builder(HttpHost.create(uri))
-                .setRequestConfigCallback(x -> x.setConnectTimeout(ConnectionTimeout).setSocketTimeout(socketTimeout))
-                .setHttpClientConfigCallback(httpClientBuilder ->
-                        httpClientBuilder
-                                .setDefaultCredentialsProvider(credentialsProvider)
-                                .setSSLContext(ssl)
-                                .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
-                                .setKeepAliveStrategy((response, context) -> keepAlive)
-                                .setDefaultIOReactorConfig(IOReactorConfig.custom().setSoKeepAlive(true).build()))
+                .setRequestConfigCallback(x -> {
+                    x.setConnectTimeout(ConnectionTimeout).setSocketTimeout(socketTimeout);
+                    connectionRequestTimeout.ifPresent(x::setConnectionRequestTimeout);
+                    return x;
+                })
+                .setHttpClientConfigCallback(httpClientBuilder -> {
+                    httpClientBuilder
+                            .setDefaultCredentialsProvider(credentialsProvider)
+                            .setSSLContext(ssl)
+                            .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+                            .setKeepAliveStrategy((response, context) -> keepAlive)
+                            .setDefaultIOReactorConfig(IOReactorConfig.custom().setSoKeepAlive(true).build());
+                    Optional.ofNullable(properties.getMaxConnPerRoute()).ifPresent(httpClientBuilder::setMaxConnPerRoute);
+                    Optional.ofNullable(properties.getMaxConnTotal()).ifPresent(httpClientBuilder::setMaxConnTotal);
+                    return httpClientBuilder;
+                })
                 .build();
         RestClientTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
         if (properties.isQueryLogging()) {

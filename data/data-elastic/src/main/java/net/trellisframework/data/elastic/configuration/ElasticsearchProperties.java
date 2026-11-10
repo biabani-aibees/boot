@@ -16,6 +16,9 @@ public class ElasticsearchProperties {
     private Duration connectionTimeout;
     private Duration socketTimeout;
     private Duration keepAlive;
+    private Duration connectionRequestTimeout;
+    private Integer maxConnPerRoute;
+    private Integer maxConnTotal;
     private boolean queryLogging;
 }
 
